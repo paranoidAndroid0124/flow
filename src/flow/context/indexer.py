@@ -45,7 +45,7 @@ class FileIndexer:
         if gitignore_path.exists():
             patterns.extend(gitignore_path.read_text().splitlines())
 
-        spec = pathspec.PathSpec.from_lines("gitwildmatch", patterns)
+        spec = pathspec.PathSpec.from_lines("gitignore", patterns)
 
         for file_path in self.root.rglob("*"):
             if not file_path.is_file():

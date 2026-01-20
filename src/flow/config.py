@@ -1,5 +1,6 @@
 """Configuration management for Flow."""
 
+import logging
 import os
 import sys
 from pathlib import Path
@@ -12,6 +13,8 @@ else:
     import tomli as tomllib
 
 import tomli_w
+
+logger = logging.getLogger(__name__)
 
 
 CONFIG_DIR = Path.home() / ".config" / "flow"

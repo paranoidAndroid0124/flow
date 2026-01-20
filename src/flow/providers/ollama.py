@@ -1,9 +1,13 @@
 """Ollama provider implementation."""
 
+import logging
+
 import httpx
 
 from flow.providers.base import Provider, GenerationResult
 from flow.config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class OllamaProvider(Provider):

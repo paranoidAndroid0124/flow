@@ -4,7 +4,7 @@ import typer
 from rich.console import Console
 
 from flow import __version__
-from flow.commands import generate, review, scaffold, context, config, jira
+from flow.commands import generate, review, scaffold, context, config, jira, auth
 
 app = typer.Typer(
     name="flow",
@@ -14,6 +14,7 @@ app = typer.Typer(
 console = Console()
 
 # Register command groups
+app.add_typer(auth.app, name="auth", help="Authentication management")
 app.add_typer(context.app, name="context", help="Manage codebase context")
 app.add_typer(config.app, name="config", help="Manage configuration")
 app.add_typer(jira.app, name="jira", help="Jira integration")

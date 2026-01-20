@@ -1,11 +1,20 @@
 """Context collection for codebase understanding."""
 
+import logging
 from pathlib import Path
 
 import pathspec
 
 from flow.config import Config
 from flow.utils.files import is_binary_file, read_file_safe, get_language_from_extension
+
+logger = logging.getLogger(__name__)
+
+# Maximum number of entries to show in a directory tree
+MAX_TREE_ENTRIES = 20
+
+# Maximum depth for directory tree traversal
+DEFAULT_MAX_TREE_DEPTH = 3
 
 
 class ContextCollector:
@@ -113,9 +122,9 @@ class ContextCollector:
         if gitignore_path.exists():
             patterns = gitignore_path.read_text().splitlines()
             patterns.extend(self._ignore_patterns)
-            spec = pathspec.PathSpec.from_lines("gitwildmatch", patterns)
+            spec = pathspec.PathSpec.from_lines("gitignore", patterns)
         else:
-            spec = pathspec.PathSpec.from_lines("gitwildmatch", self._ignore_patterns)
+            spec = pathspec.PathSpec.from_lines("gitignore", self._ignore_patterns)
 
         files = []
         for file_path in path.rglob("*"):
@@ -177,8 +186,8 @@ class ContextCollector:
             if e.name not in self._ignore_patterns
         ]
 
-        for i, entry in enumerate(entries[:20]):  # Limit entries
-            is_last = i == len(entries) - 1 or i == 19
+        for i, entry in enumerate(entries[:MAX_TREE_ENTRIES]):
+            is_last = i == len(entries) - 1 or i == MAX_TREE_ENTRIES - 1
             connector = "└── " if is_last else "├── "
 
             if entry.is_dir():

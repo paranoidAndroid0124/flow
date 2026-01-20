@@ -1,5 +1,6 @@
 """Jira integration client."""
 
+import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -7,6 +8,8 @@ from jira import JIRA
 from jira.exceptions import JIRAError
 
 from flow.config import Config, JiraConfig
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -72,14 +75,18 @@ class JiraClient:
     def client(self) -> JIRA:
         """Get or create the JIRA client."""
         if self._client is None:
-            if not self.is_configured:
+            url = self._jira_config.url
+            email = self._jira_config.email
+            api_token = self._jira_config.api_token
+            
+            if not url or not email or not api_token:
                 raise ValueError(
                     "Jira not configured. Set JIRA_URL, JIRA_EMAIL, and JIRA_API_TOKEN "
                     "environment variables or run 'flow config set jira.<key> <value>'"
                 )
             self._client = JIRA(
-                server=self._jira_config.url,
-                basic_auth=(self._jira_config.email, self._jira_config.api_token),
+                server=url,
+                basic_auth=(email, api_token),
             )
         return self._client
 
@@ -89,8 +96,17 @@ class JiraClient:
         return self._jira_config.default_project
 
     @property
-    def base_url(self) -> str | None:
-        """Get the Jira base URL."""
+    def base_url(self) -> str:
+        """Get the Jira base URL.
+        
+        Returns:
+            The Jira base URL.
+            
+        Raises:
+            ValueError: If Jira URL is not configured.
+        """
+        if not self._jira_config.url:
+            raise ValueError("Jira URL not configured")
         return self._jira_config.url
 
     def get_issue(self, issue_key: str) -> JiraIssue:

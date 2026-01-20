@@ -1,9 +1,14 @@
 """Anthropic Claude provider implementation."""
 
+import logging
+
 import anthropic
 
+from flow import auth
 from flow.providers.base import Provider, GenerationResult
 from flow.config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class AnthropicProvider(Provider):
@@ -23,13 +28,25 @@ class AnthropicProvider(Provider):
     def client(self) -> anthropic.Anthropic:
         """Get or create the Anthropic client."""
         if self._client is None:
-            api_key = self.config.anthropic.api_key
-            if not api_key:
-                raise ValueError(
-                    "Anthropic API key not configured. "
-                    "Set ANTHROPIC_API_KEY environment variable or run 'flow config set anthropic.api_key YOUR_KEY'"
+            # Try OAuth first
+            access_token = auth.get_access_token()
+            if access_token:
+                # OAuth tokens use Bearer authentication
+                self._client = anthropic.Anthropic(
+                    auth_token=access_token,
+                    default_headers={
+                        "anthropic-version": "2023-06-01",
+                    },
                 )
-            self._client = anthropic.Anthropic(api_key=api_key)
+            else:
+                # Fall back to API key
+                api_key = self.config.anthropic.api_key
+                if not api_key:
+                    raise ValueError(
+                        "Not authenticated. "
+                        "Run 'flow auth login' or set ANTHROPIC_API_KEY environment variable"
+                    )
+                self._client = anthropic.Anthropic(api_key=api_key)
         return self._client
 
     @property
@@ -39,7 +56,7 @@ class AnthropicProvider(Provider):
     def is_available(self) -> bool:
         """Check if the Anthropic provider is available."""
         try:
-            return self.config.anthropic.api_key is not None
+            return auth.get_access_token() is not None or self.config.anthropic.api_key is not None
         except Exception:
             return False
 
